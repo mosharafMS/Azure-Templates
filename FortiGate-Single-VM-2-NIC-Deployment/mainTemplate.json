@@ -165,6 +165,12 @@
         "description": "Base URL of the solution template gallery package",
         "artifactsBaseUrl": ""
       }
+    },
+    "OSDiskName":{
+      "type": "string",
+      "metadata": {
+        "description":"The name of the disk, assuming it is on the same resource group"
+      }
     }
   },
   "variables": {
@@ -396,6 +402,7 @@
       }
     },
     {
+      "comments": "This one updated to use existing disk (managed)-Mohamed",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('compute_VM_fg1_Name')]",
       "apiVersion": "2017-03-30",
@@ -425,15 +432,14 @@
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
-          "imageReference": {
-            "publisher": "fortinet",
-            "offer": "fortinet_fortigate-vm_v5",
-            "sku": "[parameters('FortiGateImageSKU')]",
-            "version": "latest"
-          },
           "osDisk": {
-            "createOption": "FromImage"
-          },
+            "createOption": "Attach",
+            "name": "fortigateBYOL",
+            "osType":"Linux",
+            "managedDisk":{
+              "id": "[resourceId('Microsoft.Compute/disks/', parameters('OSDiskName'))]"   
+            }}
+          ,
           "dataDisks": [
             {
               "diskSizeGB": "30",
