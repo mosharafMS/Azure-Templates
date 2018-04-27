@@ -126,12 +126,6 @@
         "description": "Subnet 1 Prefix in CIDR notation (if using public IP, this will be the 'WAN' or external port), example: 10.2.1.0/24"
       }
     },
-    "fortiGateIP1": {
-      "type": "string",
-      "metadata": {
-        "description": "Static IP from subnet 1 for port1 of the FortiGate virtual appliance.  Remember Azure reserves the first 3 IPs in each subnet.  When using an exising vnet, verify that this address is not already assigned, example: 10.2.1.4"
-      }
-    },
     "Subnet2Name": {
       "type": "string",
       "defaultValue": "",
@@ -144,12 +138,6 @@
       "defaultValue": "",
       "metadata": {
         "description": "Subnet 2 Prefix in CIDR notation (if using public IP, this will be the 'WAN' or external port), example: 10.2.2.0/24"
-      }
-    },
-    "fortiGateIP2": {
-      "type": "string",
-      "metadata": {
-        "description": "Static IP from subnet 2 for port1 of the FortiGate virtual appliance.  Remember Azure reserves the first 3 IPs in each subnet.  When using an exising vnet, verify that this address is not already assigned, example: 10.2.2.4"
       }
     },
     "FortinetTags": {
@@ -191,9 +179,6 @@
     "routeTable1Name": "[concat(parameters('FortiGateName'), '-', parameters('Subnet1Name'),'-routes')]",
     "routeTable2Name": "[concat(parameters('FortiGateName'), '-', parameters('Subnet2Name'),'-routes')]",
 
-    "FGDMZAddress": "[parameters('fortiGateIP2')]",
-    "FGPubFacingAddress": "[parameters('fortiGateIP1')]",
-
     "apiVer": "2015-06-15",
     "compute_VM_fg1_Name": "[parameters('FortiGateName')]",
 
@@ -224,56 +209,6 @@
       },
       "sku": {
         "name":  "Aligned"
-      }
-    },
-    {
-      "type": "Microsoft.Network/routeTables",
-      "name": "[variables('routeTable1Name')]",
-      "apiVersion": "[variables('apiVer')]",
-      "tags": {
-       "provider": "[toUpper(parameters('FortinetTags').provider)]"
-      },
-      "location": "[parameters('location')]",
-      "properties": {
-        "routes": [
-          {
-            "name": "[concat('to', '-', parameters('Subnet2Name'))]",
-            "properties": {
-              "addressPrefix": "[variables('Subnet2Prefix')]",
-              "nextHopType": "VirtualAppliance",
-              "nextHopIpAddress": "[variables('FGPubFacingAddress')]"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/routeTables",
-      "name": "[variables('routeTable2Name')]",
-      "tags": {
-       "provider": "[toUpper(parameters('FortinetTags').provider)]"
-      },
-      "apiVersion": "[variables('apiVer')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "routes": [
-          {
-            "name": "[concat('to', '-', parameters('Subnet1Name'))]",
-            "properties": {
-              "addressPrefix": "[variables('Subnet1Prefix')]",
-              "nextHopType": "VirtualAppliance",
-              "nextHopIpAddress": "[variables('FGDMZAddress')]"
-            }
-          },
-          {
-            "name": "to-Internet",
-            "properties": {
-              "AddressPrefix": "0.0.0.0/0",
-              "nextHopType": "VirtualAppliance",
-              "nextHopIPAddress": "[variables('FGDMZAddress')]"
-            }
-          }
-        ]
       }
     },
     {
@@ -464,6 +399,56 @@
             }
           ]
         }
+      }
+    },
+    {
+      "type": "Microsoft.Network/routeTables",
+      "name": "[variables('routeTable1Name')]",
+      "apiVersion": "[variables('apiVer')]",
+      "tags": {
+       "provider": "[toUpper(parameters('FortinetTags').provider)]"
+      },
+      "location": "[parameters('location')]",
+      "properties": {
+        "routes": [
+          {
+            "name": "[concat('to', '-', parameters('Subnet2Name'))]",
+            "properties": {
+              "addressPrefix": "[variables('Subnet2Prefix')]",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[reference(concat('Microsoft.Network/networkInterfaces/', variables('network_NIC_fg11_Name'))).ipConfigurations[0].properties.privateIPAddress]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/routeTables",
+      "name": "[variables('routeTable2Name')]",
+      "tags": {
+       "provider": "[toUpper(parameters('FortinetTags').provider)]"
+      },
+      "apiVersion": "[variables('apiVer')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "routes": [
+          {
+            "name": "[concat('to', '-', parameters('Subnet1Name'))]",
+            "properties": {
+              "addressPrefix": "[variables('Subnet1Prefix')]",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[variables('FGDMZAddress')]"
+            }
+          },
+          {
+            "name": "to-Internet",
+            "properties": {
+              "AddressPrefix": "0.0.0.0/0",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIPAddress": "[reference(concat('Microsoft.Network/networkInterfaces/', variables('network_NIC_fg11_Name'))).ipConfigurations[0].properties.privateIPAddress]"
+            }
+          }
+        ]
       }
     }
   ]
